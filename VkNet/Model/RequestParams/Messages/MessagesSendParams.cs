@@ -77,7 +77,7 @@ namespace VkNet.Model.RequestParams
 		/// Сохраняется вместе с сообщением и доступен в истории сообщений.
 		/// </summary>
 		[JsonProperty("random_id")]
-		public int? RandomId { get; set; }
+		public long? RandomId { get; set; }
 
 		/// <summary>
 		/// Идентификатор назначения. Для групповой беседы: 2000000000 + id беседы. Для
@@ -140,8 +140,8 @@ namespace VkNet.Model.RequestParams
 		/// 1 — не создавать сниппет ссылки из сообщения флаг, может принимать значения 1
 		/// или 0, по умолчанию
 		/// </summary>
-		[JsonProperty("dont_parse_links")]
-		public bool DontParseLinks { get; set; }
+		[JsonProperty("dont_parse_links", NullValueHandling = NullValueHandling.Ignore)]
+		public bool? DontParseLinks { get; set; }
 
 		/// <summary>
 		/// Идентификатор капчи
@@ -161,8 +161,8 @@ namespace VkNet.Model.RequestParams
 		/// 1 - отключить уведомление об упоминании в сообщении, может принимать значения 1
 		/// или 0, по умолчанию
 		/// </summary>
-		[JsonProperty("disable_mentions")]
-		public bool DisableMentions { get; set; }
+		[JsonProperty("disable_mentions", NullValueHandling = NullValueHandling.Ignore)]
+		public bool? DisableMentions { get; set; }
 
 		/// <summary>
 		/// Метка, которая обозначает приблизительное содержание сообщения от сообщества
@@ -170,7 +170,7 @@ namespace VkNet.Model.RequestParams
 		[JsonProperty("intent", NullValueHandling = NullValueHandling.Ignore)]
 		[JsonConverter(typeof(SafetyEnumJsonConverter))]
 		[CanBeNull]
-		public Intent  Intent { get; set; }
+		public Intent Intent { get; set; }
 
 		/// <summary>
 		/// Положительное число, максимальное значение 100

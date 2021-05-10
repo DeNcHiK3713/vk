@@ -29,7 +29,8 @@ namespace VkNet.Abstractions
 		StoryServerUrl GetPhotoUploadServer(GetPhotoUploadServerParams getPhotoUploadServerParams);
 
 		/// <inheritdoc cref="IStoriesCategoryAsync.GetRepliesAsync"/>
-		StoryResult<IEnumerable<Story>> GetReplies(long ownerId, ulong storyId, string accessKey = null, bool? extended = null, IEnumerable<string> fields = null);
+		StoryResult<IEnumerable<Story>> GetReplies(long ownerId, ulong storyId, string accessKey = null, bool? extended = null,
+													IEnumerable<string> fields = null);
 
 		/// <inheritdoc cref="IStoriesCategoryAsync.GetStatsAsync"/>
 		StoryStatsResult GetStats(long ownerId, ulong storyId);
@@ -51,5 +52,15 @@ namespace VkNet.Abstractions
 
 		/// <inheritdoc cref="IStoriesCategoryAsync.UnbanOwnerAsync"/>
 		bool UnbanOwner(IEnumerable<long> ownersIds);
+
+		/// <inheritdoc cref="IStoriesCategoryAsync.SaveAsync"/>
+		VkCollection<Story> Save(StoryServerUrl uploadResults, bool extended, IEnumerable<string> fields);
+
+		/// <inheritdoc cref = "IStoriesCategoryAsync.SearchAsync"/>
+		StoryResult<Story> Search(StoriesSearchParams searchParams);
+
+		/// <inheritdoc cref = "IStoriesCategoryAsync.SendInteractionAsync"/>
+		bool SendInteraction(string accessKey, string message, bool? isBroadcast = null, bool? isAnonymous = null,
+							bool? unseenMarker = null);
 	}
 }

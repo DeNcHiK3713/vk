@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using VkNet.Model;
 using VkNet.Model.Attachments;
@@ -144,7 +145,8 @@ namespace VkNet.Abstractions.Category
 		/// <remarks>
 		/// Страница документации ВКонтакте http://vk.com/dev/stories.getReplies
 		/// </remarks>
-		Task<StoryResult<IEnumerable<Story>>> GetRepliesAsync(long ownerId, ulong storyId, string accessKey = null, bool? extended = null, IEnumerable<string> fields = null);
+		Task<StoryResult<IEnumerable<Story>>> GetRepliesAsync(long ownerId, ulong storyId, string accessKey = null, bool? extended = null,
+															IEnumerable<string> fields = null);
 
 		/// <summary>
 		/// Возвращает статистику истории.
@@ -293,5 +295,67 @@ namespace VkNet.Abstractions.Category
 		/// Страница документации ВКонтакте http://vk.com/dev/stories.unbanOwner
 		/// </remarks>
 		Task<bool> UnbanOwnerAsync(IEnumerable<long> ownersIds);
+
+		/// <summary>
+		/// Сохраняет историю.
+		/// </summary>
+		/// <param name="uploadResults">Список строк, которые возвращает stories.getPhotoUploadServer или stories.getVideoUploadServer.</param>
+		/// <param name="extended">Флаг, может принимать значения 1 или 0</param>
+		/// <param name="fields">Список слов, разделенных через запятую</param>
+		/// <param name="token">Токен отмены запроса</param>
+		/// <returns>
+		/// После успешного выполнения возвращает объект, содержащий число историй в поле count и массив историй в поле items.
+		/// </returns>
+		Task<VkCollection<Story>> SaveAsync(StoryServerUrl uploadResults, bool extended, IEnumerable<string> fields,
+											CancellationToken token);
+
+		/// <summary>
+		/// Возвращает результаты поиска по историям.
+		/// </summary>
+		/// <param name = "searchParams">
+		/// Входные параметры запроса.
+		/// </param>
+		/// <param name="token">Токен отмены запроса</param>
+		/// <returns>
+		/// После успешного выполнения возвращает объект, содержащий число результатов в поле count и массив объектов блока ленты историй в поле items.
+		/// Если был задан параметр extended=1, возвращает объекты profiles  и groups, содержащие массивы объектов, описывающих пользователей и сообщества
+		/// </returns>
+		/// <remarks>
+		/// Страница документации ВКонтакте http://vk.com/dev/stories.search
+		/// </remarks>
+		Task<StoryResult<Story>> SearchAsync(StoriesSearchParams searchParams, CancellationToken token);
+
+		/// <summary>
+		/// Отправляет фидбек на историю.
+		/// </summary>
+		/// <param name = "accessKey">
+		/// Ключ доступа пользователя, полученный при подписке. Возвращает событие VKWebAppSubscribeStoryApp. строка, обязательный параметр
+		/// </param>
+		/// <param name = "message">
+		/// Текст фидбека. строка, максимальная длина 1000
+		/// </param>
+		/// <param name = "isBroadcast">
+		/// Возможные значения:
+		/// 0 —  фидбек виден только отправителю и автору истории;
+		/// 1 —  фидбек виден всем зрителям истории и автору.
+		/// флаг, может принимать значения 1 или 0, по умолчанию
+		/// </param>
+		/// <param name = "isAnonymous">
+		/// Возможные значения:
+		/// 0 — автор фидбека не  анонимный;
+		/// 1 —  автор фидбека  анонимный.
+		/// флаг, может принимать значения 1 или 0, по умолчанию
+		/// </param>
+		/// <param name = "unseenMarker">
+		/// Флаг, может принимать значения 1 или 0, по умолчанию
+		/// </param>
+		/// <param name="token">Токен отмены запроса</param>
+		/// <returns>
+		/// </returns>
+		/// <remarks>
+		/// Страница документации ВКонтакте http://vk.com/dev/stories.sendInteraction
+		/// </remarks>
+		Task<bool> SendInteractionAsync(string accessKey, string message, bool? isBroadcast = null, bool? isAnonymous = null,
+										bool? unseenMarker = null, CancellationToken token = default);
 	}
 }

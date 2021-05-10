@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using JetBrains.Annotations;
@@ -6,6 +6,8 @@ using VkNet.Enums.Filters;
 using VkNet.Enums.SafetyEnums;
 using VkNet.Model;
 using VkNet.Model.RequestParams;
+using VkNet.Model.RequestParams.Messages;
+using VkNet.Model.Results.Messages;
 using VkNet.Utils;
 
 namespace VkNet.Abstractions
@@ -52,7 +54,7 @@ namespace VkNet.Abstractions
 		bool Restore(ulong messageId, ulong? groupId = null);
 
 		/// <inheritdoc cref="IMessagesCategoryAsync.MarkAsReadAsync"/>
-		bool MarkAsRead(string peerId, long? startMessageId = null, long? groupId = null);
+		bool MarkAsRead(string peerId, long? startMessageId = null, long? groupId = null, bool? markConversationAsRead = null);
 
 		/// <inheritdoc cref="IMessagesCategoryAsync.SetActivityAsync"/>
 		bool SetActivity(string userId, MessageActivityType type, long? peerId = null, ulong? groupId = null);
@@ -115,8 +117,8 @@ namespace VkNet.Abstractions
 		ulong DeleteConversation(long? userId, long? peerId = null, ulong? groupId = null);
 
 		/// <inheritdoc cref="IMessagesCategoryAsync.GetConversationsByIdAsync"/>
-		ConversationResult GetConversationsById(IEnumerable<long> peerIds, IEnumerable<string> fields= null, bool? extended = null,
-													ulong? groupId = null);
+		ConversationResult GetConversationsById(IEnumerable<long> peerIds, IEnumerable<string> fields = null, bool? extended = null,
+												ulong? groupId = null);
 
 		/// <inheritdoc cref="IMessagesCategoryAsync.GetConversationsAsync"/>
 		GetConversationsResult GetConversations(GetConversationsParams getConversationsParams);
@@ -148,6 +150,9 @@ namespace VkNet.Abstractions
 
 		/// <inheritdoc cref="IMessagesCategoryAsync.SendMessageEventAnswerAsync"/>
 		bool SendMessageEventAnswer(string eventId, long userId, long peerId, EventData eventData = null);
+
+		/// <inheritdoc cref="IMessagesCategoryAsync.GetIntentUsersAsync"/>
+		GetIntentUsersResult GetIntentUsers(MessagesGetIntentUsersParams getIntentUsersParams);
 
 	#region Obsoleted
 

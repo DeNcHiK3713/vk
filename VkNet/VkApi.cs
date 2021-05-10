@@ -130,6 +130,9 @@ namespace VkNet
 		public event VkApiDelegate OnTokenExpires;
 
 		/// <inheritdoc />
+		public event VkApiDelegate OnTokenUpdatedAutomatically;
+
+		/// <inheritdoc />
 		[Obsolete("Нужно использовать AuthorizationFlow", false)]
 		public IBrowser Browser { get; set; }
 
@@ -180,6 +183,11 @@ namespace VkNet
 			else
 			{
 				TokenAuth(@params.AccessToken, @params.UserId, @params.TokenExpireTime);
+			}
+
+			if (@params.IsTokenUpdateAutomatically)
+			{
+				OnTokenExpires += OnTokenExpired;
 			}
 
 			_ap = @params;
@@ -310,17 +318,16 @@ namespace VkNet
 		{
 			if (!skipAuthorization && !IsAuthorized)
 			{
-				var message = $"Метод '{methodName}' нельзя вызывать без авторизации";
-				_logger?.LogError(message);
+				_logger?.LogError("Метод '{MethodName}' нельзя вызывать без авторизации", methodName);
 
-				throw new AccessTokenInvalidException(message);
+				throw new AccessTokenInvalidException($"Метод '{methodName}' нельзя вызывать без авторизации");
 			}
 
 			var url = $"https://api.vk.com/method/{methodName}";
 			var answer = InvokeBase(url, parameters);
 
-			_logger?.LogTrace($"Uri = \"{url}\"");
-			_logger?.LogTrace($"Json ={Environment.NewLine}{Utilities.PrettyPrintJson(answer)}");
+			_logger?.LogTrace("Uri = \"{Url}\"", url);
+			_logger?.LogTrace("Json ={NewLine}{Json}", Environment.NewLine, Utilities.PrettyPrintJson(answer));
 
 			VkErrors.IfErrorThrowException(answer);
 
@@ -372,8 +379,8 @@ namespace VkNet
 
 			var answer = InvokeBase(server, parameters);
 
-			_logger?.LogTrace($"Uri = '{server}'");
-			_logger?.LogTrace($"Json ={Environment.NewLine}{Utilities.PrettyPrintJson(answer)}");
+			_logger?.LogTrace("Uri = \"{Url}\"", server);
+			_logger?.LogTrace("Json ={NewLine}{Json}", Environment.NewLine, Utilities.PrettyPrintJson(answer));
 
 			VkErrors.IfErrorThrowException(answer);
 
@@ -416,6 +423,12 @@ namespace VkNet
 
 			AccessToken = authorization.AccessToken;
 			UserId = authorization.UserId;
+		}
+
+		private void OnTokenExpired(VkApi sender)
+		{
+			RefreshTokenAsync(_ap.TwoFactorAuthorization).GetAwaiter().GetResult();
+			OnTokenUpdatedAutomatically?.Invoke(sender);
 		}
 
 		/// <inheritdoc cref="IVkApi.Validate" />
@@ -497,7 +510,8 @@ namespace VkNet
 		/// <summary>
 		/// Обработчик ошибки капчи
 		/// </summary>
-		public ICaptchaHandler CaptchaHandler;
+		[UsedImplicitly]
+		public ICaptchaHandler CaptchaHandler { get; set; }
 
 		/// <inheritdoc />
 		public int MaxCaptchaRecognitionCount
@@ -649,6 +663,9 @@ namespace VkNet
 		/// <inheritdoc />
 		public IDonutCategory Donut { get; set; }
 
+		/// <inheritdoc />
+		public IDownloadedGamesCategory DownloadedGames { get; set; }
+
 	#endregion
 
 	#region private
@@ -663,9 +680,9 @@ namespace VkNet
 		/// <exception cref="CaptchaNeededException"> Требуется ввести капчу </exception>
 		private string CallBase(string methodName, VkParameters parameters, bool skipAuthorization)
 		{
-			if (!parameters.ContainsKey("v"))
+			if (!parameters.ContainsKey(Constants.Version))
 			{
-				parameters.Add("v", VkApiVersion.Version);
+				parameters.Add(Constants.Version, VkApiVersion.Version);
 			}
 
 			if (!parameters.ContainsKey(Constants.AccessToken))
@@ -673,9 +690,9 @@ namespace VkNet
 				parameters.Add(Constants.AccessToken, AccessToken);
 			}
 
-			if (!parameters.ContainsKey("lang") && _language.GetLanguage().HasValue)
+			if (!parameters.ContainsKey(Constants.Language) && _language.GetLanguage().HasValue)
 			{
-				parameters.Add("lang", _language.GetLanguage());
+				parameters.Add(Constants.Language, _language.GetLanguage());
 			}
 
 			_logger?.LogDebug(
@@ -690,8 +707,8 @@ namespace VkNet
 			{
 				answer = CaptchaHandler.Perform((sid, key) =>
 				{
-					parameters.Add("captcha_sid", sid);
-					parameters.Add("captcha_key", key);
+					parameters.Add(Constants.CaptchaSid, sid);
+					parameters.Add(Constants.CaptchaKey, key);
 
 					return Invoke(methodName, parameters, skipAuthorization);
 				});
@@ -722,7 +739,7 @@ namespace VkNet
 			}
 
 			// Защита от превышения количества запросов в секунду
-			_rateLimiter.Perform(() => SendRequest()).ConfigureAwait(false).GetAwaiter().GetResult();
+			_rateLimiter.Perform(SendRequest).ConfigureAwait(false).GetAwaiter().GetResult();
 
 			return answer;
 		}
@@ -731,7 +748,6 @@ namespace VkNet
 		/// Авторизация и получение токена
 		/// </summary>
 		/// <param name="authParams"> Параметры авторизации </param>
-		/// <exception cref="VkApiAuthorizationException"> </exception>
 		private void AuthorizeWithAntiCaptcha(IApiAuthParams authParams)
 		{
 			_logger?.LogDebug("Старт авторизации");
@@ -743,7 +759,7 @@ namespace VkNet
 			{
 				CaptchaHandler.Perform((sid, key) =>
 				{
-					_logger?.LogDebug("Авторизация с использование капчи.");
+					_logger?.LogDebug("Авторизация с использование капчи");
 					authParams.CaptchaSid = sid;
 					authParams.CaptchaKey = key;
 					BaseAuthorize(authParams);
@@ -764,7 +780,7 @@ namespace VkNet
 		{
 			if (string.IsNullOrWhiteSpace(accessToken))
 			{
-				_logger?.LogError("Авторизация через токен. Токен не задан.");
+				_logger?.LogError("Авторизация через токен. Токен не задан");
 
 				throw new ArgumentNullException(accessToken);
 			}
@@ -908,6 +924,7 @@ namespace VkNet
 			PrettyCards = new PrettyCardsCategory(this);
 			Podcasts = new PodcastsCategory(this);
 			Donut = new DonutCategory(this);
+			DownloadedGames = new DownloadedGamesCategory(this);
 
 			RequestsPerSecond = 3;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -22,7 +22,6 @@ namespace VkNet.Tests
 	/// <summary>
 	/// Базовый класс для тестирования категорий методов.
 	/// </summary>
-
 	public abstract class BaseTest : IDisposable
 	{
 		protected readonly AutoMocker Mocker = new AutoMocker();
@@ -69,7 +68,7 @@ namespace VkNet.Tests
 				.ReturnsAsync(new AuthorizationResult
 				{
 					AccessToken = "token",
-					ExpiresIn = 1000,
+					ExpiresIn = 11,
 					UserId = 1,
 					State = "123456"
 				});
@@ -170,9 +169,19 @@ namespace VkNet.Tests
 			Json = ReadJson(jsonRelativePaths);
 		}
 
+		protected void ReadCommonJsonFile(string fileName)
+		{
+			ReadJsonFile(JsonTestFolderConstants.RootFolder.Common, fileName);
+		}
+
+		protected void ReadCategoryJsonFile(string categoryName, string fileName)
+		{
+			ReadJsonFile(JsonTestFolderConstants.RootFolder.Categories, categoryName, fileName);
+		}
+
 		protected void ReadErrorsJsonFile(uint errorCode)
 		{
-			ReadJsonFile("Errors", errorCode.ToString());
+			ReadJsonFile(JsonTestFolderConstants.RootFolder.Errors, errorCode.ToString());
 		}
 
 		protected string ReadJson(params string[] jsonRelativePaths)
@@ -180,7 +189,7 @@ namespace VkNet.Tests
 			var folders = new List<string>
 			{
 				AppContext.BaseDirectory,
-				"TestData"
+				JsonTestFolderConstants.RootFolder.TestData
 			};
 
 			folders.AddRange(jsonRelativePaths);
